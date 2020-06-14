@@ -201,35 +201,51 @@ func gitPush() http.Handler {
 		repoRoot := "C:\\Users\\Akshay\\gitify"
 		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
 
-		logger.Println("git add .")
+		logger.Println("git add . in gitPush()")
 		cmd := exec.Command("git", "add", ".", repoPath)
+		cmd.Dir = repoPath
 		stdout, err := cmd.Output()
 
 		if err != nil {
 			logger.Println(err.Error())
-			return
+			// return // Gives exit status 128 error but works !!
 		}
 		logger.Println(string(stdout))
 
 
-		// cmd = exec.Command("git", "commit", "-m", "commit from gitify", repoPath)
-		// stdout, err = cmd.Output()
+		cmd = exec.Command("git", "commit", "-m", "commit from gitify", repoPath)
+		cmd.Dir = repoPath
+		stdout, err = cmd.Output()
+
+		if err != nil {
+			logger.Println(err.Error())
+			// return
+		}
+		logger.Println(string(stdout))
+
+		cmd = exec.Command("git", "push", "-u", "origin", "master", repoPath)
+		cmd.Dir = repoPath
+		stdout, err = cmd.Output()
+
+		if err != nil {
+			logger.Println(err.Error())
+			// return
+		}
+		logger.Println(string(stdout))
+
+		// addAll := "git add ."
+		// commit := "git commit -m commit from gitify"
+		// pushUp := "git push -u origin master"
+
+		// finalCommand := fmt.Sprintf("cd %s; %s; %s; %s;",repoPath, addAll, commit, pushUp)
+		// cmd := exec.Command("cmd", "-c", finalCommand)
+		// err = cmd.Run()
+
 
 		// if err != nil {
 		// 	logger.Println(err.Error())
 		// 	return
 		// }
-		// logger.Println(string(stdout))
-
-		// cmd = exec.Command("git", "push", "-u", "origin", "master", repoPath)
-		// stdout, err = cmd.Output()
-
-		// if err != nil {
-		// 	logger.Println(err.Error())
-		// 	return
-		// }
-		// logger.Println(string(stdout))
-
 	})
 }
 
