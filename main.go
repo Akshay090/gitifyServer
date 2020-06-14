@@ -5,16 +5,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"sync/atomic"
 	"time"
-
-	git "github.com/go-git/go-git"
 
 )
 
@@ -51,7 +49,7 @@ func main() {
 	router.Handle("/", index())
 	router.Handle("/gitClone", gitClone())
 	router.Handle("/openVsCode", openVsCode())
-	router.Handle("/gitCommit", gitCommit())
+	// router.Handle("/gitCommit", gitCommit())
 	router.Handle("/gitPush", gitPush())
 	router.Handle("/healthz", healthz())
 
@@ -111,7 +109,10 @@ func index() http.Handler {
 }
 
 type gitData struct {
-	Repo string `json:"repo"`
+	Domain      string `json:"Domain"`
+	RepoURL     string `json:"RepoURL"`
+	GitUserName string `json:"GitUserName"`
+	ProjectName string `json:"ProjectName"`
 }
 
 func gitClone() http.Handler {
@@ -121,41 +122,28 @@ func gitClone() http.Handler {
 
 		if r.Method == "POST" {
 
-			// Read body
-			b, err := ioutil.ReadAll(r.Body)
-			defer r.Body.Close()
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
-
-			// Unmarshal
+			decoder := json.NewDecoder(r.Body)
 			var msg gitData
-			err = json.Unmarshal(b, &msg)
+			err := decoder.Decode(&msg)
 			if err != nil {
-				http.Error(w, err.Error(), 500)
 				panic(err)
 			}
 
-			logger.Println(msg.Repo)
+			repoRoot := "C:\\Users\\Akshay\\gitify"
+			repoBase := filepath.Join(repoRoot, msg.Domain, msg.GitUserName)
+			logger.Println("Repo Path", repoBase)
 
-			directory := "sample"
-			url := "https://github.com/gophercises/renamer"
+			if _, err := os.Stat(repoBase); os.IsNotExist(err) {
+				logger.Println("Not exist creating")
+				os.MkdirAll(repoBase, os.ModePerm)
 
-			repo, err := git.PlainClone(directory, false, &git.CloneOptions{
-				URL:               url,
-				RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-			})
+			}
+			cmd := exec.Command("git", "clone", msg.RepoURL)
+			cmd.Dir = repoBase
+			_, err = cmd.Output()
 
 			if err != nil {
 				logger.Println("Git Clone error", err)
-				panic(err)
-			}
-
-			_, err = repo.Head()
-
-			if err != nil {
-				logger.Println("Git Clone repo head error", err)
 				panic(err)
 			}
 
@@ -176,14 +164,15 @@ func openVsCode() http.Handler {
 
 		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 
-		// decoder := json.NewDecoder(req.Body)
-		// var t test_struct
-		// err := decoder.Decode(&t)
-		// if err != nil {
-		//     panic(err)
-		// }
-		// log.Println(t.Test)
-		repoPath := "C:\\Users\\Akshay\\go\\src\\github.com\\Akshay090\\gitifyService\\sample"
+		decoder := json.NewDecoder(r.Body)
+		var msg gitData
+		err := decoder.Decode(&msg)
+		if err != nil {
+			panic(err)
+		}
+
+		repoRoot := "C:\\Users\\Akshay\\gitify"
+		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
 		cmd := exec.Command("code", repoPath)
 		stdout, err := cmd.Output()
 
@@ -196,68 +185,51 @@ func openVsCode() http.Handler {
 	})
 }
 
-func gitCommit() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
-
-		// decoder := json.NewDecoder(req.Body)
-		// var t test_struct
-		// err := decoder.Decode(&t)
-		// if err != nil {
-		//     panic(err)
-		// }
-		// log.Println(t.Test)
-		repoPath := "C:\\Users\\Akshay\\go\\src\\github.com\\Akshay090\\gitifyService\\sample"
-		cmd := exec.Command("git", "add", ".")
-		cmd.Dir = repoPath
-		_, err := cmd.Output()
-		if err != nil {
-			logger.Println(err.Error())
-			return
-		}
-
-		cmd = exec.Command("git", "commit", "-m", "commit from gitify")
-		cmd.Dir = repoPath
-		_, err = cmd.Output()
-		if err != nil {
-			logger.Println(err.Error())
-			return
-		}
-		// logger.Println(string(stdout))
-	})
-}
-
 
 func gitPush() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 
-		// decoder := json.NewDecoder(req.Body)
-		// var t test_struct
-		// err := decoder.Decode(&t)
+		decoder := json.NewDecoder(r.Body)
+		var msg gitData
+		err := decoder.Decode(&msg)
+		if err != nil {
+			panic(err)
+		}
+
+		repoRoot := "C:\\Users\\Akshay\\gitify"
+		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
+
+		logger.Println("git add .")
+		cmd := exec.Command("git", "add", ".", repoPath)
+		stdout, err := cmd.Output()
+
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		logger.Println(string(stdout))
+
+
+		// cmd = exec.Command("git", "commit", "-m", "commit from gitify", repoPath)
+		// stdout, err = cmd.Output()
+
 		// if err != nil {
-		//     panic(err)
+		// 	logger.Println(err.Error())
+		// 	return
 		// }
-		// log.Println(t.Test)
-		repoPath := "C:\\Users\\Akshay\\go\\src\\github.com\\Akshay090\\gitifyService\\sample"
-		cmd := exec.Command("git", "push", "-u", "origin", "master")
-		cmd.Dir = repoPath
-		_, err := cmd.Output()
-		if err != nil {
-			logger.Println(err.Error())
-			return
-		}
-		
-		cmd = exec.Command("git", "commit", "-m", "commit from gitify")
-		cmd.Dir = repoPath
-		_, err = cmd.Output()
-		if err != nil {
-			logger.Println(err.Error())
-			return
-		}
 		// logger.Println(string(stdout))
+
+		// cmd = exec.Command("git", "push", "-u", "origin", "master", repoPath)
+		// stdout, err = cmd.Output()
+
+		// if err != nil {
+		// 	logger.Println(err.Error())
+		// 	return
+		// }
+		// logger.Println(string(stdout))
+
 	})
 }
 
