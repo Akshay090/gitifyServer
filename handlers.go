@@ -61,7 +61,7 @@ func gitClone() http.Handler {
 
 			if err != nil {
 				logger.Println("Git Clone error", err)
-				panic(err)
+				// panic(err)
 			}
 
 			output, err := json.Marshal(msg)
