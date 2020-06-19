@@ -48,7 +48,7 @@ func main() {
 	router := http.NewServeMux()
 	router.Handle("/", index())
 	router.Handle("/gitClone", gitClone())
-	router.Handle("/openVsCode", openVsCode())
+	router.Handle("/openVSCode", openVsCode())
 	// router.Handle("/gitCommit", gitCommit())
 	router.Handle("/gitPush", gitPush())
 	router.Handle("/healthz", healthz())
