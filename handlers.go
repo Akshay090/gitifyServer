@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync/atomic"
+	"syscall"
+
 )
 
 func index() http.Handler {
@@ -30,7 +32,9 @@ type gitData struct {
 	RepoURL     string `json:"RepoURL"`
 	GitUserName string `json:"GitUserName"`
 	ProjectName string `json:"ProjectName"`
+	RootPath    string `json:"RootPath"`
 }
+
 
 func gitClone() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +50,8 @@ func gitClone() http.Handler {
 				panic(err)
 			}
 
-			repoRoot := "C:\\Users\\Akshay\\gitify"
+			// repoRoot := "C:\\Users\\Akshay\\gitify"
+			repoRoot := msg.RootPath
 			repoBase := filepath.Join(repoRoot, msg.Domain, msg.GitUserName)
 			logger.Println("Repo Path", repoBase)
 
@@ -56,7 +61,9 @@ func gitClone() http.Handler {
 
 			}
 			cmd := exec.Command("git", "clone", msg.RepoURL)
+			cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 			cmd.Dir = repoBase
+
 			_, err = cmd.Output()
 
 			if err != nil {
@@ -88,9 +95,12 @@ func openVsCode() http.Handler {
 			panic(err)
 		}
 
-		repoRoot := "C:\\Users\\Akshay\\gitify"
+		// repoRoot := "C:\\Users\\Akshay\\gitify"
+		repoRoot := msg.RootPath
 		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
 		cmd := exec.Command("code", repoPath)
+		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
+
 		stdout, err := cmd.Output()
 
 		if err != nil {
@@ -114,11 +124,14 @@ func gitPush() http.Handler {
 			panic(err)
 		}
 
-		repoRoot := "C:\\Users\\Akshay\\gitify"
+		// repoRoot := "C:\\Users\\Akshay\\gitify"
+		repoRoot := msg.RootPath
 		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
 
 		logger.Println("git add . in gitPush()")
 		cmd := exec.Command("git", "add", ".", repoPath)
+		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
+
 		cmd.Dir = repoPath
 		stdout, err := cmd.Output()
 
@@ -129,6 +142,7 @@ func gitPush() http.Handler {
 		logger.Println(string(stdout))
 
 		cmd = exec.Command("git", "commit", "-m", "commit from gitify", repoPath)
+		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 		cmd.Dir = repoPath
 		stdout, err = cmd.Output()
 
@@ -139,6 +153,7 @@ func gitPush() http.Handler {
 		logger.Println(string(stdout))
 
 		cmd = exec.Command("git", "push", "-u", "origin", "master", repoPath)
+		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 		cmd.Dir = repoPath
 		stdout, err = cmd.Output()
 

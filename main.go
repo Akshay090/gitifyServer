@@ -5,6 +5,7 @@ import (
 	"runtime"
 
 	"github.com/cratonica/trayhost"
+
 )
 
 // Refer to documentation at http://github.com/cratonica/trayhost for generating this
@@ -26,7 +27,7 @@ func main() {
 	}()
 
 	// Enter the host system's event loop
-	trayhost.EnterLoop("Gitify", iconData)
+	trayhost.EnterLoop("Gitify", Data)
 
 	// This is only reached once the user chooses the Exit menu item
 	fmt.Println("Exiting")
