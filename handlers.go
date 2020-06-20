@@ -35,6 +35,64 @@ type gitData struct {
 	RootPath    string `json:"RootPath"`
 }
 
+type repoStatus struct {
+	Exist bool `json:"Exist"`
+}
+
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func repoExists() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
+
+		if r.Method == "POST" {
+			decoder := json.NewDecoder(r.Body)
+			var msg gitData
+			err := decoder.Decode(&msg)
+			if err != nil {
+				panic(err)
+			}
+
+			repoRoot := msg.RootPath
+			repoBase := filepath.Join(repoRoot, msg.Domain, msg.GitUserName)
+			logger.Println("msg.RootPath", msg.RootPath)
+			logger.Println("Repo Path", repoBase)
+
+			if repoExist, _ := exists(repoBase); repoExist {
+				logger.Println("repo exist")
+				repoRes := repoStatus{true}
+
+				js, err := json.Marshal(repoRes)
+				if err != nil {
+					panic(err)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Write(js)
+			}else {
+				logger.Println("repo not exist")
+				repoRes := repoStatus{false}
+
+				js, err := json.Marshal(repoRes)
+				if err != nil {
+					panic(err)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Write(js)
+			}
+
+		}
+	})
+}
 
 func gitClone() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
