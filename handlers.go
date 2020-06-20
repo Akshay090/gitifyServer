@@ -65,10 +65,10 @@ func repoExists() http.Handler {
 
 			repoRoot := msg.RootPath
 			repoBase := filepath.Join(repoRoot, msg.Domain, msg.GitUserName)
-			logger.Println("msg.RootPath", msg.RootPath)
-			logger.Println("Repo Path", repoBase)
-
-			if repoExist, _ := exists(repoBase); repoExist {
+			repoPath := filepath.Join(repoBase, msg.ProjectName)
+			logger.Println("repoPath", repoPath)
+ 
+			if repoExist, _ := exists(repoPath); repoExist {
 				logger.Println("repo exist")
 				repoRes := repoStatus{true}
 

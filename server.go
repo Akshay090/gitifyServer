@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"sync/atomic"
 	"time"
+
 )
 
 type key int
@@ -41,6 +42,7 @@ func server() {
 
 	router := http.NewServeMux()
 	router.Handle("/", index())
+	router.Handle("/repoExists", repoExists())
 	router.Handle("/gitClone", gitClone())
 	router.Handle("/openVSCode", openVsCode())
 	router.Handle("/gitPush", gitPush())
