@@ -4,6 +4,4 @@ Gitify makes working with Git ⚡ and easy 🐣
 
 Systray implemented with : https://github.com/cratonica/trayhost
 
-Todo : 
-git clone error for repo : https://github.com/getlantern/systray
-
+Build instruction as per given in : https://github.com/cratonica/trayhost
