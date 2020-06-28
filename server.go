@@ -46,6 +46,7 @@ func server() {
 	router.Handle("/gitClone", gitClone())
 	router.Handle("/openVSCode", openVsCode())
 	router.Handle("/gitPush", gitPush())
+	router.Handle("/gitPull", gitPull())
 	router.Handle("/healthz", healthz())
 
 	nextRequestID := func() string {

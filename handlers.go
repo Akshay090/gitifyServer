@@ -33,6 +33,7 @@ type gitData struct {
 	GitUserName string `json:"GitUserName"`
 	ProjectName string `json:"ProjectName"`
 	RootPath    string `json:"RootPath"`
+	GitMsg      string `json:"GitMsg"`
 }
 
 type repoStatus struct {
@@ -67,7 +68,7 @@ func repoExists() http.Handler {
 			repoBase := filepath.Join(repoRoot, msg.Domain, msg.GitUserName)
 			repoPath := filepath.Join(repoBase, msg.ProjectName)
 			logger.Println("repoPath", repoPath)
- 
+
 			if repoExist, _ := exists(repoPath); repoExist {
 				logger.Println("repo exist")
 				repoRes := repoStatus{true}
@@ -78,7 +79,7 @@ func repoExists() http.Handler {
 				}
 				w.Header().Set("Content-Type", "application/json")
 				w.Write(js)
-			}else {
+			} else {
 				logger.Println("repo not exist")
 				repoRes := repoStatus{false}
 
@@ -108,7 +109,6 @@ func gitClone() http.Handler {
 				panic(err)
 			}
 
-			// repoRoot := "C:\\Users\\Akshay\\gitify"
 			repoRoot := msg.RootPath
 			repoBase := filepath.Join(repoRoot, msg.Domain, msg.GitUserName)
 			logger.Println("Repo Path", repoBase)
@@ -153,7 +153,6 @@ func openVsCode() http.Handler {
 			panic(err)
 		}
 
-		// repoRoot := "C:\\Users\\Akshay\\gitify"
 		repoRoot := msg.RootPath
 		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
 		cmd := exec.Command("code", repoPath)
@@ -182,12 +181,11 @@ func gitPush() http.Handler {
 			panic(err)
 		}
 
-		// repoRoot := "C:\\Users\\Akshay\\gitify"
 		repoRoot := msg.RootPath
 		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
 
 		logger.Println("git add . in gitPush()")
-		cmd := exec.Command("git", "add", ".", repoPath)
+		cmd := exec.Command("git", "add", ".")
 		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 
 		cmd.Dir = repoPath
@@ -199,7 +197,9 @@ func gitPush() http.Handler {
 		}
 		logger.Println(string(stdout))
 
-		cmd = exec.Command("git", "commit", "-m", "commit from gitify", repoPath)
+		commitMsg := msg.GitMsg
+
+		cmd = exec.Command("git", "commit", "-m", commitMsg)
 		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 		cmd.Dir = repoPath
 		stdout, err = cmd.Output()
@@ -210,7 +210,7 @@ func gitPush() http.Handler {
 		}
 		logger.Println(string(stdout))
 
-		cmd = exec.Command("git", "push", "-u", "origin", "master", repoPath)
+		cmd = exec.Command("git", "push", "-u", "origin", "master")
 		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 		cmd.Dir = repoPath
 		stdout, err = cmd.Output()
@@ -220,6 +220,37 @@ func gitPush() http.Handler {
 			// return
 		}
 		logger.Println(string(stdout))
+	})
+}
+
+func gitPull() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
+
+		decoder := json.NewDecoder(r.Body)
+		var msg gitData
+		err := decoder.Decode(&msg)
+		if err != nil {
+			panic(err)
+		}
+
+		repoRoot := msg.RootPath
+		repoPath := filepath.Join(repoRoot, msg.Domain, msg.GitUserName, msg.ProjectName)
+
+		logger.Println("In gitPull")
+		cmd := exec.Command("git", "pull")
+		cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
+
+		cmd.Dir = repoPath
+		stdout, err := cmd.Output()
+
+		if err != nil {
+			logger.Println(err.Error())
+			// return // Gives exit status 128 error but works !!
+		}
+		logger.Println(string(stdout))
+
 	})
 }
 

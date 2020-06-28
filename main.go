@@ -21,7 +21,7 @@ func main() {
 		// by clicking the tray icon.
 
 		// Be sure to call this to link the tray icon to the target url
-		trayhost.SetUrl("http://github.com/cratonica/trayhost")
+		trayhost.SetUrl("https://gitify.launchaco.com")
 
 		server()
 	}()

@@ -1,4 +1,4 @@
-module github.com/Akshay090/gitifyService
+module github.com/Akshay090/gitifyServer
 
 go 1.14
 
