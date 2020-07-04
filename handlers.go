@@ -14,8 +14,18 @@ import (
 
 )
 
+func setupResponse(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
 func index() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		setupResponse(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		if r.URL.Path != "/" {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
@@ -53,7 +63,10 @@ func exists(path string) (bool, error) {
 
 func repoExists() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		setupResponse(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 
 		if r.Method == "POST" {
@@ -97,7 +110,10 @@ func repoExists() http.Handler {
 
 func gitClone() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		setupResponse(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 
 		if r.Method == "POST" {
@@ -143,7 +159,10 @@ func gitClone() http.Handler {
 
 func openVsCode() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		setupResponse(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 
 		decoder := json.NewDecoder(r.Body)
@@ -171,7 +190,10 @@ func openVsCode() http.Handler {
 
 func gitPush() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		setupResponse(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 
 		decoder := json.NewDecoder(r.Body)
@@ -225,7 +247,10 @@ func gitPush() http.Handler {
 
 func gitPull() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		setupResponse(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 
 		decoder := json.NewDecoder(r.Body)
@@ -256,6 +281,10 @@ func gitPull() http.Handler {
 
 func healthz() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		setupResponse(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		if atomic.LoadInt32(&healthy) == 1 {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -267,6 +296,10 @@ func healthz() http.Handler {
 func logging(logger *log.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			setupResponse(&w, r)
+			if (*r).Method == "OPTIONS" {
+				return
+			}
 			defer func() {
 				requestID, ok := r.Context().Value(requestIDKey).(string)
 				if !ok {
@@ -282,6 +315,10 @@ func logging(logger *log.Logger) func(http.Handler) http.Handler {
 func tracing(nextRequestID func() string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			setupResponse(&w, r)
+			if (*r).Method == "OPTIONS" {
+				return
+			}
 			requestID := r.Header.Get("X-Request-Id")
 			if requestID == "" {
 				requestID = nextRequestID()
