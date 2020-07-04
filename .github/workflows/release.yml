@@ -24,7 +24,7 @@ jobs:
       run: |
         go get -v -t -d ./...
     - name: Build
-      run: go build -ldflags -H=windowsgui
+      run: windres -o main-res.syso main.rc && go build -ldflags -H=windowsgui
     
     - name: Release
       uses: anton-yurchenko/git-release@master

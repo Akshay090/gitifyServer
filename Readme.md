@@ -18,4 +18,8 @@
 
 **To build locally**
 
-- Refer build instruction as per given in : https://github.com/cratonica/trayhost
+Install : [tdm-gcc](https://jmeubank.github.io/tdm-gcc/)
+
+Build command : 
+
+``` windres -o main-res.syso main.rc && go build -ldflags -H=windowsgui ```
